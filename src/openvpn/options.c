@@ -1295,6 +1295,7 @@ show_p2mp_parms(const struct options *o)
     SHOW_BOOL(push_ifconfig_ipv6_defined);
     msg(D_SHOW_PARMS, "  push_ifconfig_ipv6_local = %s/%d", print_in6_addr(o->push_ifconfig_ipv6_local, 0, &gc), o->push_ifconfig_ipv6_netbits );
     msg(D_SHOW_PARMS, "  push_ifconfig_ipv6_remote = %s", print_in6_addr(o->push_ifconfig_ipv6_remote, 0, &gc));
+    SHOW_BOOL(ignore_src);
     SHOW_BOOL(enable_c2c);
     SHOW_BOOL(duplicate_cn);
     SHOW_INT(cf_max);
@@ -2475,6 +2476,10 @@ options_postprocess_verify_ce(const struct options *options,
         {
             msg(M_USAGE, "--client-config-dir/--ccd-exclusive requires --mode server");
         }
+	if (options->ignore_src)
+	{
+	    msg(M_USAGE, "--ignore-src requires --mode server");
+	}
         if (options->enable_c2c)
         {
             msg(M_USAGE, "--client-to-client requires --mode server");
@@ -7181,6 +7186,11 @@ add_option(struct options *options,
         options->port_share_journal_dir = p[3];
     }
 #endif
+    else if (streq(p[0], "ignore-src") && !p[1])
+    {
+        VERIFY_PERMISSION(OPT_P_GENERAL);
+        options->ignore_src = true;
+    }
     else if (streq(p[0], "client-to-client") && !p[1])
     {
         VERIFY_PERMISSION(OPT_P_GENERAL);
