@@ -443,6 +443,13 @@ multi_init(struct multi_context *m, struct context *t, bool tcp_mode)
     }
     m->tcp_queue_limit = t->options.tcp_queue_limit;
 
+
+    /*
+     * Ignore unrouted source ips from clients
+     * Useful for asymmetric routing
+     */
+    m->ignore_src = t->options.ignore_src;
+
     /*
      * Allow client <-> client communication, without going through
      * tun/tap interface and network stack?
@@ -3219,12 +3226,12 @@ multi_process_incoming_link(struct multi_context *m, struct multi_instance *inst
                     {
                         /* do nothing, for now.  TODO: add address learning */
                     }
-                    else
+                    else if (!m->ignore_src)
                     {
                         msg(D_MULTI_DROPPED, "MULTI: bad source address from client [%s], packet dropped",
                             mroute_addr_print(&src, &gc));
+			c->c2.to_tun.len = 0;
                     }
-                    c->c2.to_tun.len = 0;
                 }
                 /* client-to-client communication enabled? */
                 else if (m->enable_c2c)
@@ -3355,7 +3362,7 @@ multi_process_incoming_link(struct multi_context *m, struct multi_instance *inst
                         }
 #endif
                     }
-                    else
+                    else if (!m->ignore_src)
                     {
                         msg(D_MULTI_DROPPED, "MULTI: bad source address from client [%s], packet dropped",
                             mroute_addr_print(&src, &gc));
